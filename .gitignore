@@ -1,0 +1,10 @@
+.gradle/
+build/
+out/
+.idea/
+*.iml
+*.class
+*.log
+.DS_Store
+tmp/
+local-classes.csv

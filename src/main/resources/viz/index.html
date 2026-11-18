@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>life1-class-collector</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <p class="brand">life1-class-collector</p>
+    <h1>Group classes</h1>
+    <p class="lede">Future Life1, Prestige and Lite sessions from the shared CSV.</p>
+    <label class="search">
+      <span>Filter</span>
+      <input id="filter" type="search" placeholder="e.g. stretching" autocomplete="off">
+    </label>
+  </header>
+
+  <main>
+    <p id="status" class="status">Loading classes.csv…</p>
+    <ul id="class-list" class="class-list"></ul>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

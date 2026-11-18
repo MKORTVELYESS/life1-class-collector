@@ -99,6 +99,13 @@ main {
   padding: 0;
 }
 
+.list-sentinel {
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
 .class-list li {
   display: grid;
   gap: 0.2rem;

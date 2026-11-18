@@ -29,9 +29,9 @@ jobs:
 
       - name: Assemble static site
         run: |
+          cp classes.csv src/main/resources/viz/
           mkdir -p _site
           cp -r src/main/resources/viz/* _site/
-          cp classes.csv _site/classes.csv
 
       - uses: actions/configure-pages@v5
 

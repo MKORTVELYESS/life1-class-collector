@@ -10,7 +10,7 @@
   <header class="hero">
     <p class="brand">life1-class-collector</p>
     <h1>Group classes</h1>
-    <p class="lede">Future Life1, Prestige and Lite sessions from the shared CSV.</p>
+    <p class="lede">Future Life1 sessions in a searchable list.</p>
     <label class="search">
       <span>Filter</span>
       <input id="filter" type="search" placeholder="e.g. stretching" autocomplete="off">
@@ -20,6 +20,7 @@
   <main>
     <p id="status" class="status">Loading classes.csv…</p>
     <ul id="class-list" class="class-list"></ul>
+    <div id="list-sentinel" class="list-sentinel" hidden aria-hidden="true"></div>
   </main>
 
   <script src="app.js"></script>

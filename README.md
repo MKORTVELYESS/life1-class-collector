@@ -56,8 +56,9 @@ java -jar build/libs/life1-class-collector-1.0.0.jar --out=classes.csv
 Preview the static site (after a CSV exists):
 
 ```bash
+./gradlew run --args="--out=classes.csv"
 cp classes.csv src/main/resources/viz/
-python3 -m http.server 8080 --directory src/main/resources/viz
+python -m http.server 8080 --directory src/main/resources/viz
 # open http://127.0.0.1:8080/
 ```
 
@@ -82,7 +83,7 @@ git push -u origin main
 ## Workflows
 
 - `.github/workflows/update-classes.yml` — schedule + manual; `./gradlew run`; commit `classes.csv`; redeploy Pages when changed
-- `.github/workflows/deploy-pages.yml` — copies `src/main/resources/viz/*` + `classes.csv` to GitHub Pages
+- `.github/workflows/deploy-pages.yml` — `cp classes.csv src/main/resources/viz/`, then publishes `viz/*` to GitHub Pages
 
 ## Pages UI
 

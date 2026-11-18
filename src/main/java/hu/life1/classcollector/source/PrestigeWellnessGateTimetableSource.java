@@ -177,14 +177,46 @@ public final class PrestigeWellnessGateTimetableSource implements TimetableSourc
         return fields;
     }
 
-    private static String unescapeJson(String value) {
-        return value
-                .replace("\\/", "/")
-                .replace("\\\"", "\"")
-                .replace("\\n", "\n")
-                .replace("\\r", "\r")
-                .replace("\\t", "\t")
-                .replace("\\\\", "\\");
+    /** Decode JSON string escapes, including Unicode backslash-u hex sequences. */
+    static String unescapeJson(String value) {
+        if (value == null || value.isEmpty()) {
+            return value == null ? "" : value;
+        }
+        StringBuilder out = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c != '\\' || i + 1 >= value.length()) {
+                out.append(c);
+                continue;
+            }
+            char next = value.charAt(++i);
+            switch (next) {
+                case '"' -> out.append('"');
+                case '\\' -> out.append('\\');
+                case '/' -> out.append('/');
+                case 'b' -> out.append('\b');
+                case 'f' -> out.append('\f');
+                case 'n' -> out.append('\n');
+                case 'r' -> out.append('\r');
+                case 't' -> out.append('\t');
+                case 'u' -> {
+                    if (i + 4 >= value.length()) {
+                        out.append('\\').append('u');
+                        break;
+                    }
+                    String hex = value.substring(i + 1, i + 5);
+                    try {
+                        out.append((char) Integer.parseInt(hex, 16));
+                        i += 4;
+                    } catch (NumberFormatException ex) {
+                        out.append('\\').append('u').append(hex);
+                        i += 4;
+                    }
+                }
+                default -> out.append('\\').append(next);
+            }
+        }
+        return out.toString();
     }
 
     private static int findMatchingBracket(String text, int openIndex) {

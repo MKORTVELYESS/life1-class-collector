@@ -2,9 +2,15 @@
   const listEl = document.getElementById("class-list");
   const statusEl = document.getElementById("status");
   const filterEl = document.getElementById("filter");
+  const sentinelEl = document.getElementById("list-sentinel");
+
+  const PAGE_SIZE = 40;
 
   /** @type {Array<{branch:string,start:string,end:string,className:string,instructor:string,sourceUrl:string}>} */
   let classes = [];
+  /** @type {typeof classes} */
+  let filtered = [];
+  let renderedCount = 0;
 
   function parseCsv(text) {
     const rows = [];
@@ -59,9 +65,84 @@
     }).format(d);
   }
 
+  function createItem(c, index) {
+    const li = document.createElement("li");
+    li.style.animationDelay = `${Math.min(index, 24) * 18}ms`;
+
+    const when = document.createElement("div");
+    when.className = "meta";
+    when.textContent = formatWhen(c.start);
+
+    const body = document.createElement("div");
+    const branch = document.createElement("a");
+    branch.href = c.sourceUrl;
+    branch.target = "_blank";
+    branch.rel = "noopener noreferrer";
+    branch.textContent = c.branch;
+
+    const name = document.createElement("div");
+    name.className = "class-name";
+    name.textContent = c.className;
+
+    const instructor = document.createElement("div");
+    instructor.className = "meta";
+    instructor.textContent = c.instructor || "—";
+
+    body.append(branch, name, instructor);
+    li.append(when, body);
+    return li;
+  }
+
+  function updateStatus(q) {
+    if (q) {
+      statusEl.textContent =
+        filtered.length === 0
+          ? `0 matches for “${filterEl.value.trim()}”`
+          : `${filtered.length} match(es) for “${filterEl.value.trim()}” · showing ${renderedCount}`;
+      return;
+    }
+    statusEl.textContent =
+      filtered.length === 0
+        ? "0 upcoming classes"
+        : `${filtered.length} upcoming class(es) · showing ${renderedCount}`;
+  }
+
+  function appendNextPage() {
+    if (renderedCount >= filtered.length) {
+      sentinelEl.hidden = true;
+      updateStatus(filterEl.value.trim().toLowerCase());
+      return false;
+    }
+
+    const start = renderedCount;
+    const end = Math.min(start + PAGE_SIZE, filtered.length);
+    const frag = document.createDocumentFragment();
+    for (let i = start; i < end; i++) {
+      frag.append(createItem(filtered[i], i - start));
+    }
+    listEl.append(frag);
+    renderedCount = end;
+    sentinelEl.hidden = renderedCount >= filtered.length;
+    updateStatus(filterEl.value.trim().toLowerCase());
+    return renderedCount < filtered.length;
+  }
+
+  /** Keep filling while the sentinel stays in view (short lists / tall screens). */
+  function fillVisible() {
+    let guard = 0;
+    while (
+      !sentinelEl.hidden &&
+      sentinelEl.getBoundingClientRect().top < window.innerHeight + 200 &&
+      appendNextPage() &&
+      ++guard < 50
+    ) {
+      /* append until sentinel leaves the viewport or list is exhausted */
+    }
+  }
+
   function render() {
     const q = filterEl.value.trim().toLowerCase();
-    const filtered = classes
+    filtered = classes
       .filter((c) => {
         if (!q) return true;
         const hay = `${c.branch} ${c.className} ${c.instructor}`.toLowerCase();
@@ -69,41 +150,22 @@
       })
       .sort((a, b) => a.start.localeCompare(b.start));
 
-    statusEl.textContent = q
-      ? `${filtered.length} match(es) for “${filterEl.value.trim()}”`
-      : `${filtered.length} upcoming class(es)`;
-
     listEl.replaceChildren();
-    const frag = document.createDocumentFragment();
-    filtered.forEach((c, index) => {
-      const li = document.createElement("li");
-      li.style.animationDelay = `${Math.min(index, 24) * 18}ms`;
-
-      const when = document.createElement("div");
-      when.className = "meta";
-      when.textContent = formatWhen(c.start);
-
-      const body = document.createElement("div");
-      const branch = document.createElement("a");
-      branch.href = c.sourceUrl;
-      branch.target = "_blank";
-      branch.rel = "noopener noreferrer";
-      branch.textContent = c.branch;
-
-      const name = document.createElement("div");
-      name.className = "class-name";
-      name.textContent = c.className;
-
-      const instructor = document.createElement("div");
-      instructor.className = "meta";
-      instructor.textContent = c.instructor || "—";
-
-      body.append(branch, name, instructor);
-      li.append(when, body);
-      frag.append(li);
-    });
-    listEl.append(frag);
+    renderedCount = 0;
+    sentinelEl.hidden = filtered.length === 0;
+    appendNextPage();
+    fillVisible();
   }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      appendNextPage();
+      fillVisible();
+    },
+    { root: null, rootMargin: "240px 0px", threshold: 0 }
+  );
+  observer.observe(sentinelEl);
 
   async function load() {
     try {

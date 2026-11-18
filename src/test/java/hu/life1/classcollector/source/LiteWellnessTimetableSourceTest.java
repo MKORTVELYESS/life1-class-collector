@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -36,6 +37,51 @@ class LiteWellnessTimetableSourceTest {
         assertTrue(sessions.stream().anyMatch(s -> s.className().toLowerCase().contains("pump")
                 || s.className().toLowerCase().contains("alakformáló")
                 || s.className().toLowerCase().contains("kondi")));
+    }
+
+    @Test
+    void splitsClassNameAndInstructorOnBr() throws IOException {
+        String html = fixture("fixtures/lite-47-aerobik.html");
+        Branch branch = new Branch("Lite Wellness", LiteWellnessTimetableSource.LANDING_URL);
+        LiteWellnessTimetableSource source = new LiteWellnessTimetableSource(
+                new HttpFetcher(HttpClient.newHttpClient()),
+                List.of(branch),
+                url -> html);
+
+        List<ClassSession> sessions = source.parsePage(
+                branch,
+                html,
+                47,
+                LiteWellnessTimetableSource.pageUrl(47, "aerobik-terem"),
+                LocalDateTime.of(2026, 11, 16, 6, 0));
+
+        ClassSession substituted = sessions.stream()
+                .filter(s -> s.instructor().contains("Majoros"))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("Alakformáló", substituted.className());
+        assertFalse(substituted.className().contains("Majoros"));
+        assertTrue(substituted.instructor().contains("Majoros Anikó"));
+    }
+
+    @Test
+    void skipsDashPlaceholderCells() throws IOException {
+        String html = fixture("fixtures/lite-47-spinning.html");
+        Branch branch = new Branch("Lite Wellness", LiteWellnessTimetableSource.LANDING_URL);
+        LiteWellnessTimetableSource source = new LiteWellnessTimetableSource(
+                new HttpFetcher(HttpClient.newHttpClient()),
+                List.of(branch),
+                url -> html);
+
+        List<ClassSession> sessions = source.parsePage(
+                branch,
+                html,
+                47,
+                LiteWellnessTimetableSource.pageUrl(47, "spinningr-terem"),
+                LocalDateTime.of(2026, 11, 16, 6, 0));
+
+        assertTrue(sessions.stream().noneMatch(s -> LiteWellnessTimetableSource.isPlaceholder(s.className())));
+        assertTrue(sessions.stream().noneMatch(s -> s.className().contains("---")));
     }
 
     @Test

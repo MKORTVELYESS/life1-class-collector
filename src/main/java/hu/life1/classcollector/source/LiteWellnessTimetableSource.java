@@ -7,6 +7,7 @@ import hu.life1.classcollector.model.ClassSession;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
 import java.time.LocalDate;
@@ -34,6 +35,8 @@ public final class LiteWellnessTimetableSource implements TimetableSource {
     private static final String BASE = "https://www.litewellness.hu/";
     private static final Pattern WEEK_ROOM = Pattern.compile("orarend/(\\d+)-het/([a-z0-9-]+)/?");
     private static final Pattern HOUR_RANGE = Pattern.compile("(\\d{1,2}:\\d{2})\\s*[-–]\\s*(\\d{1,2}:\\d{2})");
+    /** Placeholder cells on spinning / empty slots, e.g. {@code -------}. */
+    private static final Pattern PLACEHOLDER_NAME = Pattern.compile("^[-–—\\s]+$");
 
     private static final List<String> ROOMS = List.of(
             "aerobik-terem",
@@ -127,11 +130,15 @@ public final class LiteWellnessTimetableSource implements TimetableSource {
                 LocalTime defaultEnd = LocalTime.parse(pad(hourMatcher.group(2)));
                 for (int dayIndex = 0; dayIndex < 7; dayIndex++) {
                     Element cell = cells.get(dayIndex + 1);
-                    String raw = cell.text().replace('\u00a0', ' ').strip();
-                    if (raw.isEmpty()) {
+                    // Jsoup text() turns <br> into spaces; keep line breaks so class/instructor stay separate.
+                    String raw = cellLines(cell);
+                    if (raw.isEmpty() || isPlaceholder(raw)) {
                         continue;
                     }
                     for (ClassParts parts : splitCellClasses(raw, defaultStart, defaultEnd)) {
+                        if (parts.className().isEmpty() || isPlaceholder(parts.className())) {
+                            continue;
+                        }
                         LocalDateTime start = LocalDateTime.of(monday.plusDays(dayIndex), parts.start());
                         LocalDateTime end = LocalDateTime.of(monday.plusDays(dayIndex), parts.end());
                         ClassSession session = new ClassSession(
@@ -159,13 +166,26 @@ public final class LiteWellnessTimetableSource implements TimetableSource {
         return BASE + "csoportos-orak-es-orarend/orarend/" + week + "-het/" + room + "/";
     }
 
+    /** Preserve {@code <br>} as newlines so "Class<br>Instructor" does not collapse into one field. */
+    static String cellLines(Element cell) {
+        Element clone = cell.clone();
+        for (Element br : clone.select("br")) {
+            br.replaceWith(new TextNode("\n"));
+        }
+        return clone.wholeText().replace('\u00a0', ' ').strip();
+    }
+
+    static boolean isPlaceholder(String value) {
+        return value != null && PLACEHOLDER_NAME.matcher(value.strip()).matches();
+    }
+
     private static List<ClassParts> splitCellClasses(String raw, LocalTime defaultStart, LocalTime defaultEnd) {
         // Cells are usually "ClassName\nInstructor". Workshops may embed an alternate time.
         String[] lines = raw.split("\\R+");
         List<String> cleaned = new ArrayList<>();
         for (String line : lines) {
             String t = line.strip();
-            if (!t.isEmpty()) {
+            if (!t.isEmpty() && !isPlaceholder(t)) {
                 cleaned.add(t);
             }
         }
@@ -192,6 +212,9 @@ public final class LiteWellnessTimetableSource implements TimetableSource {
         String instructor = index + 1 < cleaned.size()
                 ? String.join(" ", cleaned.subList(index + 1, cleaned.size()))
                 : "";
+        if (isPlaceholder(className)) {
+            return List.of();
+        }
         return List.of(new ClassParts(className, instructor, start, end));
     }
 

@@ -1,9 +1,8 @@
 name: Update classes.csv
 
-# 23:05 UTC ≈ 00:05 Europe/Budapest in winter / 01:05 in summer.
+# No cron: local machine dispatches this on boot via scripts/trigger-classes.ps1
+# (GitHub-hosted runners get HTTP 403 from Life1 / Lite; home IP works.)
 on:
-  schedule:
-    - cron: '5 23 * * *'
   workflow_dispatch:
 
 permissions:
@@ -12,7 +11,8 @@ permissions:
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -23,27 +23,41 @@ jobs:
           cache: gradle
 
       - name: Collect timetables into classes.csv
-        run: ./gradlew run --no-daemon --args="--out=classes.csv"
+        shell: pwsh
+        run: .\gradlew.bat run --no-daemon --args="--out=classes.csv"
 
       - name: Commit and push if classes.csv changed
         id: commit
+        shell: pwsh
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add classes.csv
-          if git diff --staged --quiet; then
-            echo "No CSV changes."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+          $changed = git diff --staged --name-only
+          if (-not $changed) {
+            Write-Host "No CSV changes."
+            "changed=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
             exit 0
-          fi
+          }
           git commit -m "Update classes.csv from Life1 / partner timetables"
           git push
-          echo "changed=true" >> "$GITHUB_OUTPUT"
+          "changed=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       # Pushes made with GITHUB_TOKEN do not trigger other workflows' on:push
       # handlers (GitHub recursion guard). Explicitly redeploy Pages instead.
       - name: Redeploy GitHub Pages
         if: steps.commit.outputs.changed == 'true'
-        run: gh workflow run deploy-pages.yml --ref main
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $uri = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/actions/workflows/deploy-pages.yml/dispatches"
+          $headers = @{
+            Accept                 = "application/vnd.github+json"
+            Authorization          = "Bearer $env:GH_TOKEN"
+            "X-GitHub-Api-Version" = "2022-11-28"
+            "User-Agent"           = "life1-class-list-actions"
+          }
+          $body = @{ ref = $env:GITHUB_REF_NAME } | ConvertTo-Json
+          Write-Host "POST $uri (ref=$($env:GITHUB_REF_NAME))"
+          Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $body -ContentType "application/json"

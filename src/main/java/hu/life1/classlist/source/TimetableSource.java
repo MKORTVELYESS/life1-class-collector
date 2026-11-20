@@ -1,7 +1,7 @@
-package hu.life1.classcollector.source;
+package hu.life1.classlist.source;
 
-import hu.life1.classcollector.model.Branch;
-import hu.life1.classcollector.model.ClassSession;
+import hu.life1.classlist.model.Branch;
+import hu.life1.classlist.model.ClassSession;
 
 import java.util.List;
 

@@ -1,9 +1,9 @@
-package hu.life1.classcollector.source;
+package hu.life1.classlist.source;
 
-import hu.life1.classcollector.TimeZones;
-import hu.life1.classcollector.http.HttpFetcher;
-import hu.life1.classcollector.model.Branch;
-import hu.life1.classcollector.model.ClassSession;
+import hu.life1.classlist.TimeZones;
+import hu.life1.classlist.http.HttpFetcher;
+import hu.life1.classlist.model.Branch;
+import hu.life1.classlist.model.ClassSession;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

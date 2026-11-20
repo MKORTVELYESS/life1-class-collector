@@ -1,4 +1,4 @@
-package hu.life1.classcollector.model;
+package hu.life1.classlist.model;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

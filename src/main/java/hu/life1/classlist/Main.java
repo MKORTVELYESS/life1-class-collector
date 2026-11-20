@@ -1,21 +1,21 @@
-package hu.life1.classcollector;
+package hu.life1.classlist;
 
-import hu.life1.classcollector.csv.CsvStore;
-import hu.life1.classcollector.http.HttpFetcher;
-import hu.life1.classcollector.source.Life1BookingTimetableSource;
-import hu.life1.classcollector.source.LiteWellnessTimetableSource;
-import hu.life1.classcollector.source.PrestigeWellnessGateTimetableSource;
-import hu.life1.classcollector.source.TimetableSource;
+import hu.life1.classlist.csv.CsvStore;
+import hu.life1.classlist.http.HttpFetcher;
+import hu.life1.classlist.source.Life1BookingTimetableSource;
+import hu.life1.classlist.source.LiteWellnessTimetableSource;
+import hu.life1.classlist.source.PrestigeWellnessGateTimetableSource;
+import hu.life1.classlist.source.TimetableSource;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CLI entry point for life1-class-collector.
+ * CLI entry point for life1-class-list.
  *
  * <p>Usage:
- * {@code java -jar life1-class-collector-1.0.0.jar [--out=classes.csv]}
+ * {@code java -jar life1-class-list-1.0.0.jar [--out=classes.csv]}
  * or {@code ./gradlew run --args="--out=classes.csv"}
  */
 public class Main {
@@ -24,7 +24,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         Config config = Config.parse(args);
-        IO.println("life1-class-collector → %s (timezone=%s)".formatted(
+        IO.println("life1-class-list → %s (timezone=%s)".formatted(
                 config.outputCsv, TimeZones.EUROPE_BUDAPEST));
 
         HttpFetcher http = HttpFetcher.createDefault();
@@ -59,7 +59,7 @@ public class Main {
 
         private static void printHelpAndExit() {
             IO.println("""
-                    Usage: java -jar life1-class-collector.jar [--out=classes.csv]
+                    Usage: java -jar life1-class-list.jar [--out=classes.csv]
                     Collects future Life1 / Prestige / Lite classes into a soft-delete CSV.
                     """);
             System.exit(0);

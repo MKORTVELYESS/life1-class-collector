@@ -1,4 +1,4 @@
-package hu.life1.classcollector.model;
+package hu.life1.classlist.model;
 
 /** A gym branch / partner site whose timetable we scrape. */
 public record Branch(String name, String timetableUrl) {

@@ -1,4 +1,4 @@
-package hu.life1.classcollector;
+package hu.life1.classlist;
 
 import java.time.ZoneId;
 

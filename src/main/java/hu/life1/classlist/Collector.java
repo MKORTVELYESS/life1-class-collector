@@ -1,9 +1,9 @@
-package hu.life1.classcollector;
+package hu.life1.classlist;
 
-import hu.life1.classcollector.csv.CsvStore;
-import hu.life1.classcollector.model.Branch;
-import hu.life1.classcollector.model.ClassSession;
-import hu.life1.classcollector.source.TimetableSource;
+import hu.life1.classlist.csv.CsvStore;
+import hu.life1.classlist.model.Branch;
+import hu.life1.classlist.model.ClassSession;
+import hu.life1.classlist.source.TimetableSource;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

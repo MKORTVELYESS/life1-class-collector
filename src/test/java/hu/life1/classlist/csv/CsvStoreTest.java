@@ -1,7 +1,7 @@
-package hu.life1.classcollector.csv;
+package hu.life1.classlist.csv;
 
-import hu.life1.classcollector.model.Branch;
-import hu.life1.classcollector.model.ClassSession;
+import hu.life1.classlist.model.Branch;
+import hu.life1.classlist.model.ClassSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

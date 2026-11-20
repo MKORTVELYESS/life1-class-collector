@@ -1,4 +1,4 @@
-package hu.life1.classcollector.http;
+package hu.life1.classlist.http;
 
 import java.io.IOException;
 import java.net.URI;
@@ -16,7 +16,7 @@ public final class HttpFetcher {
     private final String userAgent;
 
     public HttpFetcher(HttpClient client) {
-        this(client, "life1-class-collector/1.0 (+https://github.com/MKORTVELYESS/life1-class-collector)");
+        this(client, "life1-class-list/1.0 (+https://github.com/MKORTVELYESS/life1-class-list)");
     }
 
     public HttpFetcher(HttpClient client, String userAgent) {

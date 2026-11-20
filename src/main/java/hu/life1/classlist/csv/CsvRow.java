@@ -1,7 +1,7 @@
-package hu.life1.classcollector.csv;
+package hu.life1.classlist.csv;
 
-import hu.life1.classcollector.model.ClassIdentity;
-import hu.life1.classcollector.model.ClassSession;
+import hu.life1.classlist.model.ClassIdentity;
+import hu.life1.classlist.model.ClassSession;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

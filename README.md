@@ -1,8 +1,8 @@
-# life1-class-collector
+# life1-class-list
 
 Collects **future** group-class timetable entries from Life1 Budapest booking sites and partner órarend pages into one soft-delete CSV, then publishes a searchable static list on GitHub Pages.
 
-Target Pages URL: [https://mkortvelyess.github.io/life1-class-collector/](https://mkortvelyess.github.io/life1-class-collector/)
+Target Pages URL: [https://mkortvelyess.github.io/life1-class-list/](https://mkortvelyess.github.io/life1-class-list/)
 
 Timezone for every stored instant: **`Europe/Budapest`** (`TimeZones.EUROPE_BUDAPEST`).
 
@@ -50,7 +50,7 @@ Requires **JDK 25** (Gradle toolchain can download it) and network access to the
 ./gradlew run --args="--out=classes.csv"
 # or
 ./gradlew jar
-java -jar build/libs/life1-class-collector-1.0.0.jar --out=classes.csv
+java -jar build/libs/life1-class-list-1.0.0.jar --out=classes.csv
 ```
 
 Preview the static site (after a CSV exists):
@@ -64,26 +64,63 @@ python -m http.server 8080 --directory src/main/resources/viz
 
 ## Push to GitHub (manual — no Cursor GitHub connect required)
 
-1. Create empty repo `MKORTVELYESS/life1-class-collector` on GitHub.
+1. Create empty repo `MKORTVELYESS/life1-class-list` on GitHub.
 2. From this project root:
 
 ```bash
 git init
 git add .
-git commit -m "Initial life1-class-collector"
+git commit -m "Initial life1-class-list"
 git branch -M main
-git remote add origin git@github.com:MKORTVELYESS/life1-class-collector.git
+git remote add origin git@github.com:MKORTVELYESS/life1-class-list.git
 git push -u origin main
 ```
 
-3. **Actions write permission**: Repo → Settings → Actions → General → Workflow permissions → **Read and write permissions** (needed so the daily job can commit `classes.csv` and trigger Pages redeploy).
+3. **Actions write permission**: Repo → Settings → Actions → General → Workflow permissions → **Read and write permissions** (needed so the update job can commit `classes.csv` and trigger Pages redeploy).
 4. **Pages**: Settings → Pages → Source = **GitHub Actions**. Run workflow **Deploy GitHub Pages** once (or push a CSV/viz change).
-5. Enable the **Update classes.csv** workflow (Actions tab). It runs daily at `23:05` UTC and on `workflow_dispatch`. When the CSV changes it commits and explicitly runs `deploy-pages.yml` (GitHub does not chain `on: push` from `GITHUB_TOKEN` pushes).
+5. Set up the **self-hosted** update flow for **life1-class-list** (below). GitHub-hosted runners get HTTP 403 from Life1 / Lite; a home-IP runner does not.
+
+## GitHub Actions (boot → dispatch → self-hosted)
+
+There is **no schedule**. Flow:
+
+1. You turn the PC on  
+2. Local script calls GitHub to `workflow_dispatch`  
+3. Job runs on the **self-hosted** runner on that same PC (home IP → Life1 / Lite / Prestige reachable)  
+4. If `classes.csv` changed, the job commits it and dispatches **Deploy GitHub Pages**
+
+### One-time setup
+
+1. **Self-hosted runner** for this repo (separate from IPA unless you use an org runner)  
+   Repo → Settings → Actions → Runners → New self-hosted runner.  
+   Prefer installing it as a **Windows service** so it is online at boot.
+2. **PAT** that can dispatch workflows (classic scope `workflow`, or fine-grained Actions write on this repo).  
+   Reuse `IPA_GH_TOKEN` / `GH_TOKEN`, or set a dedicated var:
+
+   ```powershell
+   setx LIFE1_GH_TOKEN "ghp_..."
+   ```
+
+   Open a new terminal after `setx` (or sign out/in).
+3. **Register logon trigger** (once):
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\scripts\register-startup.ps1
+   ```
+
+   Or run manually anytime:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\scripts\trigger-classes.ps1
+   ```
+
+`trigger-classes.ps1` waits ~90s for the runner, then `POST`s  
+`/repos/.../actions/workflows/update-classes.yml/dispatches`.
 
 ## Workflows
 
-- `.github/workflows/update-classes.yml` — schedule + manual; `./gradlew run`; commit `classes.csv`; redeploy Pages when changed
-- `.github/workflows/deploy-pages.yml` — `cp classes.csv src/main/resources/viz/`, then publishes `viz/*` to GitHub Pages
+- `.github/workflows/update-classes.yml` — boot/`workflow_dispatch` on **self-hosted**; `gradlew run`; commit `classes.csv`; redeploy Pages when changed
+- `.github/workflows/deploy-pages.yml` — `cp classes.csv src/main/resources/viz/`, then publishes `viz/*` to GitHub Pages (GitHub-hosted is fine for static deploy)
 
 ## Pages UI
 
@@ -97,4 +134,5 @@ git push -u origin main
 - **Prestige**: Uses the public WellnessGate API key embedded in the page. Live checks returned ~14 days even with larger `timetable_days`. Cancelled rows (`elmarad`) are skipped.
 - **Lite**: Scrapes three rooms × discovered week links on the landing page. Horizon is current + next ISO week.
 - If a branch request fails, that branch is logged and skipped; soft-delete does **not** mark its rows deleted on a failed empty scrape.
-- Cloud/CI egress or bot blocking may empty a source; verify with a local `./gradlew run` if Actions produce sparse CSVs. Fixtures under `src/test/resources/fixtures/` keep parsers testable offline.
+- GitHub-hosted runners are blocked (HTTP 403) by Life1 / Lite; use the self-hosted boot flow above. Soft-delete does not mark rows deleted when a branch scrape fails.
+- Fixtures under `src/test/resources/fixtures/` keep parsers testable offline.

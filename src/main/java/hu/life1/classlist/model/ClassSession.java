@@ -1,6 +1,6 @@
-package hu.life1.classcollector.model;
+package hu.life1.classlist.model;
 
-import hu.life1.classcollector.TimeZones;
+import hu.life1.classlist.TimeZones;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;

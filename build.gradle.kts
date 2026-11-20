@@ -13,7 +13,7 @@ java {
 }
 
 application {
-    mainClass = "hu.life1.classcollector.Main"
+    mainClass = "hu.life1.classlist.Main"
 }
 
 repositories {
@@ -34,7 +34,7 @@ tasks.test {
 
 tasks.jar {
     manifest {
-        attributes["Main-Class"] = "hu.life1.classcollector.Main"
+        attributes["Main-Class"] = "hu.life1.classlist.Main"
     }
     // Fat jar so `java -jar build/libs/...` works without a classpath.
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

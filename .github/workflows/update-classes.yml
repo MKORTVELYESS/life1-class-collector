@@ -23,12 +23,12 @@ jobs:
           cache: gradle
 
       - name: Collect timetables into classes.csv
-        shell: pwsh
+        shell: powershell
         run: .\gradlew.bat run --no-daemon --args="--out=classes.csv"
 
       - name: Commit and push if classes.csv changed
         id: commit
-        shell: pwsh
+        shell: powershell
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -47,7 +47,7 @@ jobs:
       # handlers (GitHub recursion guard). Explicitly redeploy Pages instead.
       - name: Redeploy GitHub Pages
         if: steps.commit.outputs.changed == 'true'
-        shell: pwsh
+        shell: powershell
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
